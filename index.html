@@ -1,0 +1,246 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark"><title>Let's Get FIRE'd: A FIRE retirement calculator</title>
+<meta name="description" content="A free FIRE retirement calculator with a chat helper. See when you could reach Lean, Coast, Barista, Chubby or Fat FIRE. Your numbers stay in your browser.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg"><meta property="og:type" content="website"><meta property="og:title" content="Let's Get FIRE'd">
+<meta property="og:description" content="A FIRE retirement calculator. Answer a few questions and see your plan."><meta property="og:url" content="https://clintchegin.github.io/lets-get-fired/">
+<meta property="og:image" content="https://clintchegin.github.io/lets-get-fired/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image">
+<script src="vendor/chart.umd.min.js" integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG"></script><style>/* Palette and band/tile/ladder/dial styling ported from the private page's design (design only, no data). */
+:root{color-scheme:light dark;--s1:#bfdbfe;--s2:#60a5fa;--s3:#1d4ed8;--e2:#c2410c;--emb:linear-gradient(90deg,#b91c1c,#c2410c,#a16207);--embfg:#fff;--bg:#f7f7f8;--fg:#18181b;--fg2:#52525b;--mut:#63636b;--card:#fff;--bd:#ececef;--in:#fff;--inbd:#a1a1aa;--good:#15803d;--bad:#dc2626;--acc:#c2410c;--accbg:#fff7ed;--grid:rgba(0,0,0,.08);--sh2:rgba(0,0,0,.04)}
+@media(prefers-color-scheme:dark){:root{--s1:#4f6fd1;--s2:#8ab8fb;--s3:#dbeafe;--e2:#fb923c;--emb:linear-gradient(90deg,#f87171,#fb923c,#facc15);--embfg:#1c1917;--bg:#0f0f12;--fg:#f4f4f5;--fg2:#d4d4d8;--mut:#a1a1aa;--card:#1c1c21;--bd:#2e2e35;--in:#121216;--inbd:#71717a;--good:#4ade80;--bad:#f87171;--acc:#fb923c;--accbg:#2a1a0e;--grid:rgba(255,255,255,.1);--sh2:rgba(0,0,0,.3)}}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--fg)}
+a{color:var(--acc)}header{padding:20px 16px 6px;text-align:center}.brand{display:inline-flex;gap:10px;align-items:center}.brand svg{width:34px;height:34px}
+h1{margin:0;font-size:1.9rem;font-weight:800}.tagline{margin:2px 0 0;color:var(--mut);font-size:.88rem}
+/* One layout from the start: chat always top-left, so it never jumps. */
+.app{max-width:1320px;margin:auto;padding:12px 16px;display:grid;gap:16px;grid-template-columns:380px minmax(0,1fr);grid-template-areas:"chat results" "inputs results";align-items:start}
+#inputs{grid-area:inputs}#results{grid-area:results;display:grid;gap:16px;min-width:0}#chat{grid-area:chat}
+@media(max-width:860px){.app{grid-template-columns:minmax(0,1fr);grid-template-areas:"chat" "inputs" "results"}body.has-plan .app{grid-template-areas:"chat" "results" "inputs"}}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:18px;box-shadow:0 1px 2px var(--sh2)}h2{font-size:1rem;margin:0 0 10px}
+.welcomeline{font-size:1.2rem;font-weight:800;margin:0 0 2px}.wsub{color:var(--fg2);margin:0 0 10px;font-size:.9rem}body:not(.welcome) .welcomeline,body:not(.welcome) .wsub{display:none}
+#chat{display:flex;flex-direction:column;border:2px solid transparent;transition:border-color .4s,box-shadow .4s}body.welcome #chat{border-color:var(--acc);box-shadow:0 8px 30px rgba(194,65,12,.14)}
+#chatlog{overflow:auto;min-height:150px;max-height:46vh;display:flex;flex-direction:column;gap:8px;padding:4px 0}
+.cmsg{padding:9px 12px;border-radius:12px;max-width:92%;font-size:.92rem}.cbot{background:var(--accbg);align-self:flex-start}.cuser{background:var(--acc);color:var(--embfg);align-self:flex-end}
+.cnote{font-size:.82rem;color:var(--fg2);border:1px dashed var(--bd);align-self:stretch}.cthink{opacity:.7;font-style:italic}.cerr{color:var(--bad)}
+#chatform{display:flex;gap:8px;margin-top:8px}#chatin{flex:1;resize:none;font:inherit;padding:9px;border-radius:10px;border:1px solid var(--inbd);background:var(--in);color:var(--fg)}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--fg);padding:8px 12px}button.pri{background:var(--acc);border-color:var(--acc);color:var(--embfg);font-weight:600}
+.undo{padding:1px 8px;font-size:.78rem;margin-left:6px}.starters{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:10px}.privnote{font-size:.78rem;color:var(--mut);margin-top:6px}
+fieldset{border:0;border-top:1px solid var(--bd);margin:10px 0 0;padding:8px 0 0}legend{font-weight:700;font-size:.85rem;color:var(--fg2);padding-right:6px}
+details#finetune{margin-top:12px;border-top:1px solid var(--bd);padding-top:8px}details#finetune>summary{cursor:pointer;font-weight:700}
+label{display:block;font-size:.82rem;font-weight:600;margin:8px 0 3px}label.chk{display:flex;gap:8px;font-weight:500}
+input[type=text]{width:100%;padding:8px 10px;border:1px solid var(--inbd);border-radius:8px;background:var(--in);color:var(--fg);font:inherit}input::placeholder{color:var(--mut)}input[type=checkbox]{accent-color:var(--acc)}
+.warn{color:var(--bad);font-size:.78rem}.note{font-size:.8rem;color:var(--mut)}.trust{font-size:.8rem;color:var(--fg2);background:var(--accbg);border-radius:8px;padding:7px 9px;margin:4px 0 6px}
+.ibtn{border:0;background:none;padding:0 2px;color:var(--acc);font-size:.95rem}#trustfull{margin-top:4px}
+.banner{background:#fef3c7;color:#78350f;border:1px solid #f59e0b;border-radius:10px;padding:8px 12px;font-weight:600}
+@media(prefers-color-scheme:dark){.banner{background:#422006;color:#fde68a;border-color:#b45309}}
+.answer{font-size:1.35rem;font-weight:800;margin:0 0 14px;line-height:1.35}.answer .sep{color:var(--mut);font-weight:400;margin:0 8px}
+.ember{background:var(--emb);-webkit-background-clip:text;background-clip:text;color:transparent}
+.bandg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:20px;align-items:stretch}@media(max-width:1100px){.bandg{grid-template-columns:minmax(0,1fr)}}
+.bandl{display:flex;flex-direction:column;gap:12px}.bandr{display:flex}.ch{position:relative;flex:1;min-height:300px;width:100%}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.tile{border:1px solid var(--bd);border-radius:10px;padding:10px 12px}.tile .k{font-size:.78rem;color:var(--mut)}.tile .v{font-size:1.35rem;font-weight:800}.tile .s{font-size:.75rem;color:var(--fg2)}
+.dialc{display:grid;grid-template-columns:minmax(0,170px) minmax(0,1fr);gap:12px;align-items:center}.dialc svg .dt{fill:var(--fg)}.needle{stroke:var(--fg)}.hub{fill:var(--fg)}.dialprev .preview{min-height:90px}
+.ladhd{font-weight:700;font-size:.9rem;margin:18px 0 8px;color:var(--fg2)}.ladder{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}@media(max-width:560px){.ladder{grid-template-columns:repeat(2,minmax(0,1fr))}.ladder .rung.mine{grid-column:1/-1}}
+.rung{border:1px solid var(--bd);border-radius:10px;padding:8px 10px;font-size:.82rem}.rung .n{font-weight:700}.rung .b{color:var(--mut);font-size:.76rem}.rung.mine{border:2px solid var(--e2)}.rung.met{border-color:var(--good)}
+.youb{display:inline-block;padding:0 7px;border-radius:999px;background:var(--emb);color:var(--embfg);font-size:.72rem;font-weight:700}
+.bar{height:8px;background:var(--bd);border-radius:999px;overflow:hidden;margin:5px 0}.bar i{display:block;height:100%;background:var(--emb)}
+.good{color:var(--good)}.bad{color:var(--bad)}
+.preview{position:relative;min-height:150px;display:grid;place-items:center;text-align:center}.preview .ghost{position:absolute;inset:0;opacity:.18;filter:grayscale(1);display:flex;align-items:center}.preview p{position:relative;margin:0;font-weight:600;color:var(--fg2);max-width:36ch}.preview small{font-weight:400;color:var(--mut)}
+svg{display:block;width:100%;height:auto}svg .ln{fill:none;stroke:var(--acc);stroke-width:2.5}svg .area{fill:var(--acc);opacity:.12}svg .tline{stroke:var(--good);stroke-dasharray:5 4}
+[role=tablist]{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}[role=tab]{position:relative;border-radius:999px;padding:6px 14px}[role=tab][aria-selected=true]{background:var(--acc);color:var(--embfg);border-color:var(--acc)}
+.tip{display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:5;width:240px;background:var(--fg);color:var(--bg);font-size:.78rem;padding:7px 9px;border-radius:8px;text-align:left;font-weight:400}[role=tab]:hover .tip,[role=tab]:focus-visible .tip{display:block}
+.aiflash{animation:fl 2.4s}@keyframes fl{0%,40%{box-shadow:0 0 0 3px var(--acc)}100%{box-shadow:none}}@media(prefers-reduced-motion:reduce){#chat{transition:none}.aiflash{animation:none}}
+footer{text-align:center;color:var(--mut);font-size:.82rem;padding:20px 16px 30px}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}.progress{font-size:.8rem;color:var(--mut)}
+.preview{overflow:hidden;border-radius:10px}.preview .ghost svg{width:100%;height:100%}.preview .ghost{opacity:.12}.preview svg .ln{stroke:var(--mut)}.preview svg .area{fill:var(--mut)}.preview svg .tline{stroke:var(--mut)}
+.ladder{grid-template-columns:repeat(6,minmax(0,1fr))}@media(max-width:1100px){.ladder{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:560px){.ladder{grid-template-columns:repeat(2,minmax(0,1fr))}}.rung{position:relative;cursor:help}.rung:hover .tip,.rung:focus .tip,.rung:focus-within .tip{display:block}.rung .tip{left:0;width:220px}.ladder .rung:nth-child(n+5) .tip{left:auto;right:0}
+.incprompt{border:1px dashed var(--bd);border-radius:10px;padding:10px 12px}.incprompt label{margin:0 0 6px}.incrow{display:flex;gap:8px}
+.rung .tip{top:auto;bottom:calc(100% + 8px)}
+</style></head><body class="welcome">
+<header><div class="brand"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="f" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#c2410c"/><stop offset=".6" stop-color="#f97316"/><stop offset="1" stop-color="#fbbf24"/></linearGradient></defs><path fill="url(#f)" d="M32 3c3 10 15 17 15 33a15 15 0 0 1-30 0c0-8 4-13 8-17 0 6 2 9 5 10-3-9 0-18 2-26z"/><path fill="#fde68a" d="M32 34c2 4 7 6 7 12a7 7 0 0 1-14 0c0-4 3-6 4-9 1 2 2 3 3 3z"/></svg>
+<h1>Let's Get FIRE'd</h1></div><p class="tagline">A FIRE retirement calculator</p></header>
+<div class="app">
+<section class="card" id="chat" aria-label="Ledger chat"><p class="welcomeline">Find out when you could retire early.</p><p class="wsub">Ledger will ask a few quick questions and fill in the calculator for you.</p>
+<div id="chatlog" aria-live="off"></div><div id="chatlive" class="sr-only" aria-live="polite"></div>
+<form id="chatform"><label for="chatin" class="sr-only">Message Ledger</label><textarea id="chatin" rows="2" placeholder="e.g. I'm 34 and have about $60K invested"></textarea><button class="pri" id="chatsend" type="submit">Send</button></form>
+<div class="starters"><button type="button" id="typical">Use typical numbers</button><a href="#inputs" id="skip">Skip, I'll enter numbers myself</a></div>
+<div class="privnote">Ledger never needs your name, accounts or address.</div></section>
+<section class="card" id="inputs" aria-labelledby="inh"><h2 id="inh">Your numbers</h2>
+<div class="trust">Saved only in your browser. Your chat messages and numbers are sent to xAI; this site doesn't store them. <button type="button" class="ibtn" id="trustbtn" aria-expanded="false" aria-controls="trustfull" aria-label="More about privacy">ⓘ</button><div id="trustfull" hidden>Your inputs are kept in this browser's local storage, never on our servers; use Clear my data to remove them. When you chat, your messages and current calculator numbers go to xAI to generate Ledger's reply. Don't share names, account numbers or addresses.</div></div>
+<div class="progress" id="progress"></div><div id="fields"></div><button type="button" id="clear" style="margin-top:14px">Clear my data</button></section>
+<div id="results"><div class="banner" id="exbanner" hidden>Example numbers — replace with yours</div>
+<section class="card band" id="herocard" aria-labelledby="answer"><div id="bandprev"></div><div id="bandwrap" hidden><h2 class="answer" id="answer"></h2><div class="bandg"><div class="bandl"><div class="tiles" id="tiles"></div><div id="dial"></div></div><div class="bandr"><div class="ch"><canvas id="c1" role="img" aria-label="Portfolio growth until retirement: starting balance, contributions and growth, with your FIRE number"></canvas></div></div></div><div id="ladderwrap"></div></div></section>
+<section class="card"><h2>Retirement drawdown</h2><div id="ddprev"></div><div id="ddwrap" hidden><div class="ch" style="height:240px"><canvas id="c2" role="img" aria-label="Portfolio balance during retirement"></canvas></div><p class="note" id="ddnote"></p></div></section>
+<section class="card" id="sscard" hidden><h2>Social Security</h2><div id="ssbody"></div></section></div></div>
+<footer>This is not financial advice. Check all calculations yourself.</footer>
+<script>const CHAT_ENDPOINT="https://lets-get-fired-chat.clintchegin.workers.dev/chat";// Calculator fields: [id, label, type, unit, min, max, group]. Shared by the page and (via gen_schema.mjs) the worker schema.
+const FIELDS=[
+ ['age','Current age','integer','years',18,90,'core'],
+ ['inv','Invested assets (retirement + brokerage accounts)','number','USD',0,1e9,'core'],
+ ['spend','Annual spending','number','USD/yr',0,5e6,'core'],
+ ['contrib','Yearly contributions to investments','number','USD/yr',0,5e6,'core'],
+ ['ret','Retire at (age)','integer','years',19,100,'core'],
+ ['cash','Cash & savings','number','USD',0,1e8,'more'],['inccash','Count cash as invested','boolean'],
+ ['inc','Take-home income','number','USD/yr',0,1e7,'more'],
+ ['r','Real return before retirement','number','%',-5,15,'asm'],['rp','Real return after retirement','number','%',-5,15,'asm'],
+ ['wr','Withdrawal rate','number','%',0.5,10,'asm'],['tax','Tax on withdrawals','number','%',0,99,'asm'],
+ ['mtgon','I have a mortgage','boolean'],['mp','Mortgage payment (inside annual spending)','number','USD/month',0,1e5,'mtg'],['my','Years left on mortgage','integer','years',0,40,'mtg'],
+ ['sson','Include Social Security','boolean'],['ssm','Estimated Social Security benefit at claiming age (today\'s $)','number','USD/month',0,1e4,'ss'],['ssa','Social Security claiming age','integer','years',62,70,'ss'],
+ ['pt','Barista FIRE part-time income','number','USD/yr',0,1e6,'tier'],['pte','Barista FIRE: work part-time until age','integer','years',19,100,'tier'],
+ ['leanS','Lean FIRE spending','number','USD/yr',0,1e6,'tier'],['chubS','Chubby FIRE spending','number','USD/yr',0,5e6,'tier'],['fatS','Fat FIRE spending','number','USD/yr',0,5e6,'tier']];
+// Used when a field is blank. These are modelling assumptions, not anyone's data.
+const ASSUME={r:5,rp:4,wr:4,tax:0,ssa:67,pt:30000,pte:60,leanS:40000,chubS:100000,fatS:150000};
+const REQUIRED=['age','inv','spend','contrib','ret'];
+if(typeof module!=='undefined')module.exports={FIELDS,ASSUME,REQUIRED};
+// ===== Let's Get FIRE'd: calculator engine + UI. No personal data; inputs live only in this browser's localStorage. =====
+const $=i=>document.getElementById(i),SK='lgf.inputs.v1',UK='lgf.ui.v1';
+const CF=Object.fromEntries(FIELDS.map(f=>[f[0],{label:f[1],type:f[2],unit:f[3],min:f[4],max:f[5],group:f[6]}]));
+// "Use typical numbers": U.S. national figures, rounded. Clearly labelled as an example in the UI.
+const TYPICAL={
+ age:40,        // Median age of U.S. adults is about 39-40 (U.S. Census Bureau, 2023 population estimates; median age of all residents 39.1)
+ inv:87000,     // Median retirement-account balance for families that have one: $87,000 (Federal Reserve, Survey of Consumer Finances 2022)
+ cash:8000,     // Median transaction-account (checking/savings) balance: $8,000 (Federal Reserve, Survey of Consumer Finances 2022)
+ spend:77280,   // Average annual household expenditures: $77,280 (BLS Consumer Expenditure Survey, 2023)
+ inc:87869,     // Average household income after taxes: $87,869 (BLS Consumer Expenditure Survey, 2023)
+ contrib:9400,  // ~11.7% average total 401(k) contribution rate incl. employer (Vanguard, How America Saves 2024) x $80,610 median household income (U.S. Census Bureau, 2023)
+ ret:65,        // Average expected retirement age of U.S. workers: 65 (Gallup Economy and Personal Finance survey, 2024)
+ sson:true,ssm:1976, // Average retired-worker Social Security benefit: about $1,976/month (SSA, January 2025 COLA fact sheet)
+ ssa:67,        // Full retirement age for anyone born 1960 or later (SSA)
+ mtgon:false
+};
+let V={},example=false,skipped=false;
+function load(){try{const s=JSON.parse(localStorage.getItem(SK)||'null');if(s){V=s.v||{};example=!!s.example}const u=JSON.parse(localStorage.getItem(UK)||'null');if(u)skipped=!!u.skipped}catch(_){}}
+function save(){try{localStorage.setItem(SK,JSON.stringify({v:V,example}));localStorage.setItem(UK,JSON.stringify({skipped}))}catch(_){}}
+const has=k=>V[k]!==undefined&&V[k]!==null&&V[k]!=='';
+const num=k=>has(k)?+V[k]:(k in ASSUME?ASSUME[k]:NaN);
+const missing=()=>REQUIRED.filter(k=>!has(k));
+const fmt=x=>'$'+Math.round(x).toLocaleString('en-US'),fk=x=>Math.abs(x)>=1e6?'$'+(x/1e6).toFixed(2)+'M':Math.abs(x)>=1e4?'$'+Math.round(x/1e3)+'K':fmt(x);
+const age1=x=>isFinite(x)?(Math.round(x*10)/10).toString():'not before 100';
+// ---------- engine (annual steps, real dollars) ----------
+function base(){const a=num('age'),R=num('ret'),Sc=num('spend'),M=V.mtgon&&has('mp')?num('mp')*12:0,pa=V.mtgon&&has('my')?a+num('my'):Infinity;
+ return{a,R,Sc,M:M,pa,P:num('inv')+(V.inccash&&has('cash')?num('cash'):0),C:num('contrib'),I:has('inc')?num('inc'):0,r:num('r')/100,rp:num('rp')/100,wr:num('wr')/100,tx:Math.min(num('tax'),99)/100,
+  ss:V.sson&&has('ssm')?num('ssm')*12:0,ssa:Math.min(Math.max(num('ssa'),62),70)}}
+const retSpend=(b,R=b.R)=>Math.max(b.Sc-(b.pa<=R?b.M:0),0); // mortgage drops out of spending once paid off
+const gross=(b,x)=>Math.max(x,0)/(1-b.tx);
+function fireT(b,sp,R=b.R){const ss=Math.min(b.ss,sp),k=Math.max(b.ssa-R,0),bridge=b.rp?(1-Math.pow(1+b.rp,-k))/b.rp*(1+b.rp):k; // SS bridge: pay the SS share yourself until claiming
+ return gross(b,sp-ss)/b.wr+gross(b,ss)*bridge}
+function sim(b,years,contribUntil=999){let v=b.P,c=0,gr=0;const rows=[];for(let y=1;y<=years;y++){const age=b.a+y,cy=age<=contribUntil?b.C+(age>b.pa?b.M:0):0,gy=v*b.r;v+=gy+cy;c+=cy;gr+=gy;rows.push({age,v,c,gr})}return rows}
+const valAt=(b,R,cu)=>R<=b.a?b.P:sim(b,R-b.a,cu)[R-b.a-1].v;
+function ageReach(b,spF){let prev=b.P-fireT(b,spF(b.a),b.a);if(prev>=0)return b.a;for(const x of sim(b,100-b.a)){const d=x.v-fireT(b,spF(x.age),x.age);if(d>=0)return x.age-1+(-prev)/(d-prev);prev=d}return Infinity}
+function drawdown(b,start,pt=0,pte=0){let v=start,dep=null;const rows=[];for(let age=b.R;age<95;age++){const need=b.Sc-(age>=b.pa?b.M:0)-(age>=b.ssa?b.ss:0)-(age<pte?pt:0);v=(v-gross(b,need))*(1+b.rp);if(v<0&&dep===null)dep=age+1;rows.push({age:age+1,v:Math.max(v,0)})}return{rows,dep}}
+function compute(){if(missing().length)return null;const b=base();if(b.R<=b.a)return{err:'Retirement age needs to be later than your current age.'};
+ const atR=valAt(b,b.R),S=retSpend(b),Fn=fireT(b,S),fa=ageReach(b,a=>retSpend(b,a)),noC=valAt({...b,C:0,M:0},b.R),dd=drawdown(b,atR);
+ const tiers=[['Lean',num('leanS')],['Chubby',num('chubS')],['Fat',num('fatS')]].map(([n,sp])=>({n,sp,T:fireT(b,sp)}));
+ const top=[...tiers].reverse().find(t=>atR>=t.T);
+ const ptNeed=Math.ceil(Math.max(S-(atR*b.wr*(1-b.tx)),0)/100)*100,pdd=drawdown(b,atR,num('pt'),num('pte'));
+ const end=Math.min(Math.max(b.R,Math.ceil(isFinite(fa)?fa:b.R))+2,100);
+ return{b,atR,S,Fn,pct:Math.round(atR/Fn*100),fa,noC,dd,tiers,top,ptNeed,pdd,rows:sim(b,end-b.a),sr:b.I>0?b.C/b.I*100:null}}
+// Everything Ledger may quote, preformatted the way the page shows it.
+function outputs(o){if(!o)return null;if(o.err)return{Problem:o.err};const b=o.b;return{'Retirement age':b.R,'Balance at retirement':fk(o.atR),'Full FIRE number':fk(o.Fn),'% of full FIRE number':o.pct+'%','Retirement spending per year':fk(o.S),'Full FIRE age':isFinite(o.fa)?age1(o.fa):'not reached by 100',
+ 'Money lasts':o.dd.dep?'runs out at age '+o.dd.dep:'lasts past 95','Highest tier reached at retirement':o.top?o.top.n+' FIRE':'none yet (below Lean FIRE)',
+ 'Tier comparisons':o.tiers.map(t=>({Tier:t.n+' FIRE','Spending per year':fk(t.sp),Target:fk(t.T),'% of target funded':Math.round(o.atR/t.T*100)+'%'})),
+ 'Coast FIRE: balance at retirement if contributions stop now':fk(o.noC),'Coast FIRE: % of full FIRE number':Math.round(o.noC/o.Fn*100)+'%',
+ 'Barista FIRE: part-time income needed per year at retirement':o.ptNeed?fk(o.ptNeed):'none needed',
+ [`Barista FIRE: money lasts with ${fk(num('pt'))}/yr part-time until ${num('pte')}`]:o.pdd.dep?'runs out at age '+o.pdd.dep:'lasts past 95',
+ 'Savings rate':o.sr===null?'add take-home income to see it':Math.round(o.sr)+'%','Social Security per month':b.ss?fk(b.ss/12)+' from age '+b.ssa:'not included',
+ Note:"All $ are today's dollars. Return, withdrawal and tier assumptions apply where the person left them blank."}}
+// ---------- charts ----------
+function lineSVG(pts,opt={}){const W=600,H=220,p=32,xs=pts.map(d=>d[0]),ys=pts.map(d=>d[1]),x0=Math.min(...xs),x1=Math.max(...xs),y1=Math.max(...ys,opt.target||0)*1.08||1;
+ const X=x=>p+(x-x0)/((x1-x0)||1)*(W-p-8),Y=y=>H-22-y/y1*(H-40),d=pts.map((q,i)=>(i?'L':'M')+X(q[0]).toFixed(1)+','+Y(q[1]).toFixed(1)).join('');
+ return`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}L${X(x1)},${H-22}L${X(x0)},${H-22}Z" class="area"/><path d="${d}" class="ln"/>${opt.target?`<line x1="${p}" x2="${W-8}" y1="${Y(opt.target)}" y2="${Y(opt.target)}" class="tline"/>`:''}</svg>`}
+const SAMPLE=lineSVG(Array.from({length:30},(_,i)=>[i,Math.pow(1.07,i)*10+i*3]),{target:60});
+const preview=(msg)=>`<div class="preview"><div class="ghost">${SAMPLE}</div><p>${msg}</p></div>`;
+const need=ks=>'Lights up when you add: '+ks.map(k=>CF[k].label.replace(/ \(.*/,'').toLowerCase()).join(', ')+'.';
+const cv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const charts={};
+function mkChart(id,cfg){if(charts[id])charts[id].destroy();if(!window.Chart||!$(id))return;Chart.defaults.color=cv('--fg2');Chart.defaults.borderColor=cv('--grid');Chart.defaults.font.family='system-ui,sans-serif';
+ charts[id]=new Chart($(id),{...cfg,options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
+  plugins:{legend:{position:'bottom',labels:{boxWidth:12}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fk(c.parsed.y)}}},
+  scales:{x:{stacked:true,grid:{display:false},title:{display:true,text:'Age'}},y:{stacked:true,beginAtZero:true,ticks:{callback:v=>fk(v)}}}}})}
+function growthChart(o){const b=o.b,L=[b.a,...o.rows.map(r=>r.age)];
+ mkChart('c1',{data:{labels:L,datasets:[{type:'line',label:'Your FIRE number '+fk(o.Fn),data:L.map(()=>o.Fn),borderColor:cv('--e2'),borderWidth:1.5,borderDash:[6,4],pointRadius:0,stack:'t'},
+  {type:'bar',label:'Starting balance',data:L.map(()=>b.P),backgroundColor:cv('--s1'),stack:'s'},{type:'bar',label:'Contributions',data:[0,...o.rows.map(r=>r.c)],backgroundColor:cv('--s2'),stack:'s'},
+  {type:'bar',label:'Growth',data:[0,...o.rows.map(r=>r.gr)],backgroundColor:cv('--s3'),stack:'s'}]}})}
+function ddChart(o){const L=[o.b.R,...o.dd.rows.map(r=>r.age)],v=[o.atR,...o.dd.rows.map(r=>r.v)];
+ mkChart('c2',{data:{labels:L,datasets:[{type:'bar',label:'Portfolio in retirement',data:v,backgroundColor:L.map(a=>o.dd.dep&&a>=o.dd.dep?cv('--bad'):cv('--s2')),stack:'s'}]}})}
+function dialSVG(rate){const ang=Math.PI*(1-Math.min(Math.max(rate,0),70)/70);
+ return`<svg viewBox="0 0 220 152" role="img" aria-label="Savings rate ${Math.round(rate)}%"><defs><linearGradient id="dg" x1="0" x2="1"><stop offset="0" stop-color="#dc2626"/><stop offset=".45" stop-color="#eab308"/><stop offset="1" stop-color="#16a34a"/></linearGradient></defs><path d="M20 115 A90 90 0 0 1 200 115" fill="none" stroke="url(#dg)" stroke-width="18" stroke-linecap="round"/><line x1="110" y1="115" x2="${(110+62*Math.cos(ang)).toFixed(1)}" y2="${(115-62*Math.sin(ang)).toFixed(1)}" class="needle" stroke-width="4" stroke-linecap="round"/><circle cx="110" cy="115" r="7" class="hub"/><text x="110" y="148" text-anchor="middle" font-size="22" font-weight="800" class="dt">${Math.round(rate)}%</text><text x="20" y="132" font-size="10" text-anchor="middle" class="dt">0%</text><text x="200" y="132" font-size="10" text-anchor="middle" class="dt">70%</text></svg>`}
+// ---------- inputs UI ----------
+const GROUPS=[['core','The basics'],['more','Also helpful'],['mtg','Mortgage (optional)'],['ss','Social Security (optional)'],['asm','Assumptions'],['tier','FIRE tier targets']];
+function inputHTML(id){const f=CF[id],ph=id in ASSUME?(f.unit&&f.unit.startsWith('USD')?fmt(ASSUME[id]):ASSUME[id]+(f.unit&&f.unit.startsWith('%')?'%':'')):'';
+ if(f.type==='boolean')return`<label class="chk"><input type="checkbox" id="${id}"> ${f.label}</label>`;
+ const u=f.unit&&f.unit.startsWith('USD')?' ($'+(f.unit.includes('/')?'/'+f.unit.split('/')[1]:'')+')':f.unit==='%'?' (%)':'';
+ return`<label for="${id}">${f.label}${u}</label><input id="${id}" ${f.unit&&f.unit.startsWith('USD')?'class="money" inputmode="decimal"':'inputmode="decimal"'} type="text" autocomplete="off"${ph?` placeholder="${ph}${id in ASSUME?' (assumed)':''}"`:''}><div class="warn" id="${id}-w"></div>`}
+function buildInputs(){let h='';for(const[g,t]of GROUPS){if(g==='asm')h+='<details id="finetune"><summary>Fine-tune <span class="note">(returns, withdrawal rate, tier targets)</span></summary>';const ids=FIELDS.filter(f=>f[6]===g||(g==='more'&&f[0]==='inccash')).map(f=>f[0]),pre=g==='mtg'?'mtgon':g==='ss'?'sson':null;
+  h+=`<fieldset class="grp g-${g}"><legend>${t}</legend>${pre?inputHTML(pre)+`<div class="sub" id="sub-${g}">`:''}${ids.map(inputHTML).join('')}${pre?'</div>':''}${g==='ss'?'<div class="note">Get your estimate at <a href="https://www.ssa.gov/myaccount/" target="_blank" rel="noopener">ssa.gov/myaccount</a>.</div>':''}</fieldset>`}
+ $('fields').innerHTML=h+'</details>';
+ document.querySelectorAll('#fields input').forEach(e=>{e.addEventListener(e.type==='checkbox'?'change':'input',()=>{setVal(e.id,e.type==='checkbox'?e.checked:e.value,true)});
+  if(e.classList.contains('money'))e.addEventListener('blur',()=>{if(has(e.id))e.value=(+V[e.id]).toLocaleString('en-US')})})}
+function parseNum(s){s=String(s).trim().replace(/[,$\s]/g,'');const m=s.match(/^(-?\d*\.?\d+)([km])?$/i);if(!m)return NaN;return+m[1]*(m[2]?(m[2].toLowerCase()==='k'?1e3:1e6):1)}
+// returns error string or '' ; manual=true when typed in the form
+function setVal(id,raw,manual){const f=CF[id];let err='';
+ if(f.type==='boolean'){V[id]=!!raw}
+ else if(raw===null||raw===''){delete V[id]}
+ else{const n=parseNum(raw);if(!isFinite(n))err='Not a number';else if(n<f.min||n>f.max)err=`Must be between ${f.min.toLocaleString()} and ${f.max.toLocaleString()}`;else if(f.type==='integer'&&n!==Math.round(n))err='Use a whole number';else V[id]=n;if(err&&manual)delete V[id]}
+ if(manual){const w=$(id+'-w');if(w)w.textContent=err;if(example){example=false}}
+ if(!err){save();render()}return err}
+function syncForm(){for(const id in CF){const e=$(id);if(!e||e===document.activeElement)continue;if(CF[id].type==='boolean')e.checked=!!V[id];else e.value=has(id)?(e.classList.contains('money')?(+V[id]).toLocaleString('en-US'):V[id]):''}}
+// ---------- results UI ----------
+const kp=(k,v,c='',sub='')=>`<div class="tile"><div class="k">${k}</div><div class="v ${c}">${v}</div>${sub?`<div class="s">${sub}</div>`:''}</div>`;
+function ladder(o){let i=0;const r=(n,sub,T,v,tip,mine,foot)=>{const pc=T?Math.round(v/T*100):null,id='rt'+(i++);return`<div class="rung${mine?' mine':pc>=100?' met':''}" tabindex="0" aria-describedby="${id}"><div class="n">${n}${mine?' <span class="youb">You</span>':''}</div><div class="b">${sub}</div>${pc!==null?`<div class="bar"><i style="width:${Math.min(pc,100)}%"></i></div><div class="b">${fk(T)} · ${pc}%</div>`:`<div class="b">${foot}</div>`}<span role="tooltip" class="tip" id="${id}">${tip}</span></div>`};
+ const t=o.tiers,b=o.b,bt=o.ptNeed?`Barista FIRE: part-time work covers the gap. At ${b.R} you'd need about ${fk(o.ptNeed)}/yr on top of a ${num('wr')}% withdrawal; with ${fk(num('pt'))}/yr until ${num('pte')} your money ${o.pdd.dep?'runs out at '+o.pdd.dep:'lasts past 95'}.`:`Barista FIRE: part-time work covers the gap. At ${b.R} you wouldn't need any.`;
+ const tt=x=>`${x.n} FIRE: ${x.n==='Lean'?'a frugal':x.n==='Chubby'?'a comfortable':'a lavish'} retirement on ${fk(x.sp)}/yr, which needs ${fk(x.T)}.${x.sp<o.S?` That's less than your ${fk(o.S)}/yr.`:''}`;
+ return`<div class="ladhd">How your ${fk(o.atR)} at ${b.R} compares <span class="note">(hover or tap a tier)</span></div><div class="ladder">${r('Coast','no more saving',o.Fn,o.noC,`Coast FIRE: stop saving today and growth alone takes your ${fk(b.P)} to ${fk(o.noC)} by ${b.R}.`)}${r('Lean',fk(t[0].sp)+'/yr',t[0].T,o.atR,tt(t[0]))}${r('Barista',o.ptNeed?'part-time income':'no part-time needed',0,0,bt,false,o.ptNeed?`needs ${fk(o.ptNeed)}/yr`:'covered')}${r('Chubby',fk(t[1].sp)+'/yr',t[1].T,o.atR,tt(t[1]))}${r('Fat',fk(t[2].sp)+'/yr',t[2].T,o.atR,tt(t[2]))}${r('Your plan',fk(o.S)+'/yr',o.Fn,o.atR,`Your plan: your own spending of ${fk(o.S)}/yr needs ${fk(o.Fn)}.`,true)}</div>`}
+function render(){syncForm();const m=missing(),o=compute(),ok=o&&!o.err;
+ document.body.classList.toggle('has-plan',!!ok);document.body.classList.toggle('welcome',!ok&&!skipped&&!Object.keys(V).some(has));
+ $('exbanner').hidden=!example;$('sub-mtg').hidden=!V.mtgon;$('sub-ss').hidden=!V.sson;
+ $('progress').textContent=ok?'':`${REQUIRED.length-m.length} of ${REQUIRED.length} basics filled in`;
+ $('bandwrap').hidden=!ok;$('bandprev').hidden=!!ok;
+ if(!ok){$('bandprev').innerHTML=preview(o&&o.err?o.err:'Answer a few questions to see your plan'+(m.length<REQUIRED.length?`<br><small>${need(m)}</small>`:''));Object.keys(charts).forEach(k=>{charts[k].destroy();delete charts[k]})}
+ else{const b=o.b;
+  $('answer').innerHTML=`At <b class="ember">${fk(o.S)}/yr</b>, your money ${o.dd.dep?`<span class="bad">runs out at ${o.dd.dep}</span>`:'<span class="good">lasts past 95</span>'}.<span class="sep">·</span>You'd need ${fk(o.Fn)}; you're at <b class="ember">${o.pct}%</b>.`;
+  $('tiles').innerHTML=kp('Balance at '+b.R,fk(o.atR))+kp('Your FIRE number',fk(o.Fn),'',`${o.pct}% funded at ${b.R}`)+kp('Full FIRE age',isFinite(o.fa)?age1(o.fa):'not by 100','',isFinite(o.fa)&&o.fa>b.R?'if you keep working':'')+kp('Money lasts',o.dd.dep?'to '+o.dd.dep:'past 95',o.dd.dep?'bad':'good');
+  $('dial').innerHTML=o.sr===null?`<div class="incprompt"><label for="inc2">Add take-home income to see your savings rate</label><div class="incrow"><input id="inc2" type="text" class="money" inputmode="decimal" autocomplete="off" placeholder="$ per year"><button type="button" id="inc2b">Add</button></div><div class="warn" id="inc2-w"></div></div>`:`<div class="dialc">${dialSVG(o.sr)}<div class="note">Saving <b>${fk(b.C)}/yr</b> of ${fk(b.I)} take-home: <b>${Math.round(o.sr)}%</b>.</div></div>`;
+  if($('inc2')){const go=()=>{const e=setVal('inc',$('inc2').value,false);const w=$('inc2-w');if(w)w.textContent=e};$('inc2b').onclick=go;$('inc2').onkeydown=ev=>{if(ev.key==='Enter')go()}}
+  $('ladderwrap').innerHTML=ladder(o);growthChart(o);ddChart(o);
+  $('ddnote').innerHTML=`${o.dd.dep?'<span class="bad">Money runs out at age '+o.dd.dep+'.</span>':'<span class="good">Money lasts past 95.</span>'} Spending ${fk(o.S)}/yr${b.ss?', Social Security from '+b.ssa:''}.`}
+ $('ddwrap').hidden=!ok;$('ddprev').hidden=!!ok;if(!ok)$('ddprev').innerHTML=preview(need(m.length?m:REQUIRED));
+ $('sscard').hidden=!V.sson;if(V.sson)$('ssbody').innerHTML=has('ssm')?(ok?`<p>${fk(num('ssm'))}/mo from age ${num('ssa')} lowers the savings you need. Your FIRE number already accounts for it.</p>`:'<p class="note">'+need(m)+'</p>'):preview('Add your estimated monthly benefit to include it.');
+ window.__ok=!!ok;if(window.chatStateChanged)chatStateChanged()}
+function init(){load();buildInputs();
+ $('typical').onclick=()=>{V={...TYPICAL};example=true;skipped=true;save();render();if(window.chatNote)chatNote('Loaded example numbers. Tell me your real ones any time and I\'ll swap them in.')};
+ $('skip').onclick=e=>{e.preventDefault();skipped=true;save();render();$('inputs').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});$('age').focus({preventScroll:true})};
+ $('clear').onclick=()=>{if(!confirm('Clear everything you entered on this device?'))return;V={};example=false;skipped=false;try{localStorage.removeItem(SK);localStorage.removeItem(UK)}catch(_){}document.querySelectorAll('.warn').forEach(w=>w.textContent='');render();if(window.chatReset)chatReset()};
+ $('trustbtn').onclick=e=>{const x=$('trustfull').hidden;$('trustfull').hidden=!x;e.currentTarget.setAttribute('aria-expanded',x)};
+ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',render);
+ render()}
+init();// ===== Ledger chat: the model only proposes input values via set_inputs; the page validates, applies and computes =====
+const chatOn=/^https:\/\/|^http:\/\/localhost/.test(CHAT_ENDPOINT);
+const GREET="Hi, I'm Ledger. I'll help you build a FIRE plan, one question at a time. You never need to share your name or account details.\n\n**First: how old are you, and roughly how much do you have invested for retirement?**";
+let CHAT=[],busy=false,batchN=0;
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const md=t=>esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');
+const fv=(k,v)=>CF[k].type==='boolean'?(v?'on':'off'):CF[k].unit&&CF[k].unit.startsWith('USD')?fk(v)+(CF[k].unit.includes('/')?'/'+CF[k].unit.split('/')[1].replace('month','mo'):''):v+(CF[k].unit==='%'?'%':'');
+function bubble(cls,html){const d=document.createElement('div');d.className='cmsg '+cls;d.innerHTML=html;$('chatlog').appendChild(d);$('chatlog').scrollTop=1e9;return d}
+function chatContext(){const inputs={};for(const k in CF)if(has(k))inputs[CF[k].label]=V[k];return JSON.stringify({inputs,stillMissing:missing().map(k=>CF[k].label),exampleNumbersLoaded:example,outputs:outputs(compute())})}
+function applyInputs(args){const applied={},rejected={},prev={};
+ for(const[k,v]of Object.entries(args||{})){if(!CF[k]){rejected[k]='unknown field';continue}
+  if(CF[k].type==='boolean'&&typeof v!=='boolean'&&v!==null){rejected[k]='expected true/false';continue}
+  prev[k]=V[k];const e=setVal(k,v===null?'':(CF[k].type==='boolean'?v:String(v)),false);if(e){rejected[k]=e;continue}if(example){example=false;save();render()}applied[k]=V[k]}
+ return{applied,rejected,prev}}
+function changeNote(r){const ks=Object.keys(r.applied),rj=Object.entries(r.rejected);if(!ks.length&&!rj.length)return;
+ const d=bubble('cnote',ks.map(k=>`Set ${esc(CF[k].label)} to <b>${esc(r.applied[k]===undefined?'blank':fv(k,r.applied[k]))}</b>`).join('<br>')+(rj.length?'<br><span class="warn">'+rj.map(([k,v])=>`Couldn't set ${esc(CF[k]?.label||k)}: ${esc(v)}`).join('<br>')+'</span>':'')+(ks.length?' <button type="button" class="undo">Undo</button>':''));
+ ks.forEach(k=>{const e=$(k);if(e&&e.closest('#finetune'))$('finetune').open=true;if(e){e.classList.remove('aiflash');void e.offsetWidth;e.classList.add('aiflash')}});
+ const u=d.querySelector('.undo');if(u)u.onclick=()=>{ks.forEach(k=>{if(r.prev[k]===undefined)delete V[k];else V[k]=r.prev[k]});save();render();u.disabled=true;u.textContent='Undone';CHAT.push({role:'user',content:'(I clicked Undo on the last change.)'})}}
+async function chatSend(text){if(busy||!text.trim()||!chatOn)return;busy=true;$('chatsend').disabled=true;bubble('cuser',esc(text));CHAT.push({role:'user',content:text});const th=bubble('cbot cthink','Ledger is thinking…');
+ try{for(let round=0;round<3;round++){const r=await fetch(CHAT_ENDPOINT,{method:'POST',referrerPolicy:'no-referrer-when-downgrade',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:CHAT.slice(-30),context:chatContext(),final:round>=2})});
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error==='rate_limited'?`Too many messages; try again in ${Math.ceil((e.retry_after||60)/60)} min.`:'Chat unavailable right now.')}
+  const d=await r.json(),m=d.message;CHAT.push(m);
+  if(m.tool_calls&&m.tool_calls.length){for(const tc of m.tool_calls){let a={};try{a=JSON.parse(tc.function.arguments||'{}')}catch(_){}const res=applyInputs(a);changeNote(res);
+    CHAT.push({role:'tool',tool_call_id:tc.id,content:JSON.stringify({applied:Object.fromEntries(Object.entries(res.applied).map(([k,v])=>[CF[k].label,v===undefined?null:fv(k,v)])),rejected:res.rejected,stillMissing:missing().map(k=>CF[k].label),outputs:outputs(compute())})})}continue}
+  th.remove();const b=bubble('cbot',md(m.content||'(no reply)'));$('chatlive').textContent=b.textContent;break}}
+ catch(err){bubble('cbot cerr',esc(err.message&&!/fetch/i.test(err.message)?err.message:'Chat unavailable right now. You can still fill in the form.'))}
+ finally{th.remove();busy=false;$('chatsend').disabled=false;$('chatin').focus()}}
+window.chatNote=t=>{bubble('cbot',md(t));CHAT.push({role:'assistant',content:t})};
+window.chatReset=()=>{CHAT=[];$('chatlog').innerHTML='';bubble('cbot',md(GREET));CHAT.push({role:'assistant',content:GREET})};
+window.chatStateChanged=()=>{};
+$('chatform').onsubmit=e=>{e.preventDefault();const t=$('chatin').value;$('chatin').value='';chatSend(t)};
+$('chatin').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('chatform').requestSubmit()}});
+chatReset();if(!chatOn){$('chatin').disabled=$('chatsend').disabled=true;bubble('cbot cerr','Chat is offline. You can still fill in the form.')}
+</script></body></html>

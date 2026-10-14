@@ -1,0 +1,3 @@
+{ "name": "lets-get-fired-chat", "private": true, "type": "module", "main": "worker.js",
+  "scripts": { "dev:mock": "MOCK=1 XAI_API_KEY=mock node dev-server.mjs 8788", "deploy": "wrangler deploy" },
+  "devDependencies": { "wrangler": "^3.114.17" } }

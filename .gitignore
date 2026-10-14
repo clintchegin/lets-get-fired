@@ -1,0 +1,12 @@
+worker/node_modules/
+index_test.html
+.wrangler/
+
+# local-only
+shots/
+test_shots.cjs
+e2e_live.cjs
+worker/dev-server.mjs
+worker/mock-upstream.mjs
+PUBLIC_FILES.txt
+index_test.html

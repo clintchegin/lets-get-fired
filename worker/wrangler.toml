@@ -1,0 +1,23 @@
+# Public Ledger chat proxy for Let's Get FIRE'd. Separate worker, key, limiter and cap from the private ledger-chat.
+# Deploy:  CLOUDFLARE_API_TOKEN=... npx wrangler deploy
+#          npx wrangler secret put XAI_API_KEY      (the public-site key, with its own xAI spending limit)
+name = "lets-get-fired-chat"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[vars]
+ALLOWED_ORIGIN = "https://clintchegin.github.io"
+ALLOWED_PATH_PREFIX = "/lets-get-fired/"
+MODEL = "grok-4.20-0309-non-reasoning"
+
+[observability]
+enabled = false
+
+[[durable_objects.bindings]]
+name = "RLDO"
+class_name = "RateLimiter"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RateLimiter"]
