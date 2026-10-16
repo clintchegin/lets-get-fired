@@ -4,10 +4,13 @@ import json,os
 CHAT_ENDPOINT=os.environ.get("LGF_CHAT_ENDPOINT","https://lets-get-fired-chat.clintchegin.workers.dev/chat")
 OUT=os.environ.get("LGF_OUT","index.html")
 SITE="https://clintchegin.github.io/lets-get-fired/"
+# Cloudflare Web Analytics token (public). Cookieless, no IP storage. Empty = no beacon.
+CF_BEACON_TOKEN=os.environ.get("LGF_CF_BEACON_TOKEN","fd3fe8f6992c4b1fa35e1e5fa004c11a")
+BEACON=f'<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon=\'{json.dumps({"token":CF_BEACON_TOKEN})}\'></script>' if CF_BEACON_TOKEN else ""
 r=lambda f:open(f).read()
 FLAME=r("favicon.svg").replace('<svg ','<svg aria-hidden="true" ',1)
-TRUST_SHORT="Saved only in your browser. Your chat messages and numbers are sent to xAI; this site doesn't store them."
-TRUST_FULL="Your inputs are kept in this browser's local storage, never on our servers; use Clear my data to remove them. When you chat, your messages and current calculator numbers go to xAI to generate Ledger's reply. Don't share names, account numbers or addresses."
+TRUST_SHORT="Saved only in your browser. Your chat messages and numbers are sent to xAI; this site doesn't store them. Anonymous, cookie-free visit counts via Cloudflare Web Analytics."
+TRUST_FULL="Your inputs are kept in this browser's local storage, never on our servers; use Clear my data to remove them. When you chat, your messages and current calculator numbers go to xAI to generate Ledger's reply. Don't share names, account numbers or addresses. Anonymous, cookie-free visit counts via Cloudflare Web Analytics."
 html=f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light dark"><title>Let's Get FIRE'd: A FIRE retirement calculator</title>
 <meta name="description" content="A free FIRE retirement calculator with a chat helper. See when you could reach Lean, Coast, Barista, Chubby or Fat FIRE. Your numbers stay in your browser.">
@@ -30,5 +33,5 @@ html=f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="
 <section class="card"><h2>Retirement drawdown</h2><div id="ddprev"></div><div id="ddwrap" hidden><div class="ch" style="height:240px"><canvas id="c2" role="img" aria-label="Portfolio balance during retirement"></canvas></div><p class="note" id="ddnote"></p></div></section>
 <section class="card" id="sscard" hidden><h2>Social Security</h2><div id="ssbody"></div></section></div></div>
 <footer>This is not financial advice. Check all calculations yourself.</footer>
-<script>const CHAT_ENDPOINT={json.dumps(CHAT_ENDPOINT)};{r("fields.js")}{r("app.js")}init();{r("chat.js")}</script></body></html>"""
+<script>const CHAT_ENDPOINT={json.dumps(CHAT_ENDPOINT)};{r("fields.js")}{r("app.js")}init();{r("chat.js")}</script>{BEACON}</body></html>"""
 open(OUT,"w").write(html);print("wrote",OUT)
