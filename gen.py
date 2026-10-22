@@ -3,7 +3,7 @@
 import json,os
 CHAT_ENDPOINT=os.environ.get("LGF_CHAT_ENDPOINT","https://lets-get-fired-chat.clintchegin.workers.dev/chat")
 OUT=os.environ.get("LGF_OUT","index.html")
-SITE="https://clintchegin.github.io/lets-get-fired/"
+SITE="https://fire.clintchegin.com/"
 # Cloudflare Web Analytics token (public). Cookieless, no IP storage. Empty = no beacon.
 CF_BEACON_TOKEN=os.environ.get("LGF_CF_BEACON_TOKEN","fd3fe8f6992c4b1fa35e1e5fa004c11a")
 BEACON=f'<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon=\'{json.dumps({"token":CF_BEACON_TOKEN})}\'></script>' if CF_BEACON_TOKEN else ""
